@@ -9,10 +9,29 @@ require 'sinatra/base'
 require 'sinatra/jbuilder'
 
 class Application < Sinatra::Base
+  flogger = File.open("log/app.log","a")
+  flogger.sync = true
+  logger = Logger.new(flogger)
+  use Rack::CommonLogger, logger
   use Rack::JSONBodyParser
   set :show_exceptions, false
 
+  enable :logging
+
+  error do
+    exception = env['sinatra.error']
+
+    if exception
+      method = env['REQUEST_METHOD']
+      uri = env['REQUEST_URI']
+      backtrace = exception.backtrace.join("\n")
+
+      logger.error "[#{method} #{uri}] #{exception.inspect}:\n#{backtrace}"
+    end
+  end
+
   get '/' do
+    User.first
     '<h1>It works!</h1>'
   end
 
